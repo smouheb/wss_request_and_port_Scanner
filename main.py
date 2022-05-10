@@ -1,12 +1,8 @@
 from data_processing import GenerateOuput
 from connection_pool import Connection
 
-
-port_scanning = Connection(nbre_of_threads=200)
-
-if __name__ == '__main__':
-    port_scanning.start_threads()
-
+con = Connection()
+con.connect('8080')
 
 # while True:
 #     queue = Queue()
