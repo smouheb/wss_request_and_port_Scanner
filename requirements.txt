@@ -1,5 +1,6 @@
 autopep8==1.6.0
 pycodestyle==2.8.0
+pyfiglet==0.8.post1
 python3-nmap==1.5.1
 simplejson==3.17.6
 toml==0.10.2

@@ -1,9 +1,10 @@
 import websocket
 import nmap3
 import json
-from queue import Queue
-from concurrent.futures import ThreadPoolExecutor
+import time
+from collections import deque
 from websocket import create_connection
+from data_processing import GenerateOuput
 
 
 class Connection:
@@ -12,7 +13,8 @@ class Connection:
         self.NBRE_THREADS = nbre_of_threads
         self.NBRE_PORTS = []
         self.IP_ADDRESS = ip_address
-        self.queue = Queue()
+        self.timing = time.time() + 60
+        self.queue = deque()
 
     def check_port_status(self):
         n = nmap3.NmapHostDiscovery()
@@ -41,8 +43,8 @@ class Connection:
                 return ws_ser_addr
             else:
                 print(ws_ser_addr + ' Did not work')
-        except Exception as e:
-            print('Issue with : '+str(e))
+        except Exception:
+            pass
 
     '''
         Looping through the ports retieved from check_port_status
@@ -51,22 +53,9 @@ class Connection:
 
     def run_connection_test(self):
         ports = self.check_port_status()
-        print(ports)
         if len(ports) > 0:
             for p in ports:
                 self.test_connection(p)
-
-    '''
-        Thread manager, executes the run_con_test for each port
-    '''
-
-    def start_threads(self):
-        prt_nbre = self.chec_port_status()
-
-        with ThreadPoolExecutor(self.NBRE_THREADS) as executor:
-            results = executor.map(self.run_con_test, prt_nbre)
-        for result in results:
-            print(result)
 
     '''
         Connection method to ws 
@@ -80,23 +69,40 @@ class Connection:
                 on_open=self.on_open,
                 on_message=self.on_message,
                 on_close=self.on_close,
-                on_error=self.on_error
             )
             ws.run_forever()
 
         except Exception as e:
             print('Issue with: '+str(e))
 
-    def on_message(self, ws, message):
-        message = json.loads(message)
-        for msg in message:
-            print(message[msg])
+    '''
+        Process messages and dispatch for analysis
+    '''
 
-    def on_error(self, ws):
-        print(ws)
+    def on_message(self, ws, message):
+        try:
+            messages = json.loads(message)
+            for k, msg in messages.items():
+                try:
+                    if time.time() < self.timing:
+                        if k == 'b':
+                            self.queue.appendleft(msg)
+                    else:
+                        output = GenerateOuput(self.queue)
+                        output.print_data(output.structure_data())
+                        self.timing = time.time() + 60
+                        self.queue = deque()
+                        print('\n Next output in one minute \n')
+
+                except Exception as e:
+                    print(
+                        'Issue thrown in the Inner block on on_message method: ', str(e))
+
+        except Exception as e:
+            print('Issue thrown in the Outer block on on_message method: ', str(e))
 
     def on_open(self, ws):
-        print("opened")
+        print("\n Stream has been opened we're collecting the data now \n \n ")
 
     def on_close(self, ws):
-        print("closed connection")
+        print("\n closed connection \n \n")

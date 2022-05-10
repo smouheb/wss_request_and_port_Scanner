@@ -1,6 +1,10 @@
 
 from collections import deque
 
+'''
+    Class that holds the business logic, performs the data analysis etc...
+'''
+
 
 class AnalyseStream:
 
@@ -21,13 +25,13 @@ class AnalyseStream:
 
     def get_first_number(self) -> int:
         try:
-            return self.data[0]
+            return self.data[-1]
         except Exception as e:
             print(str(e), str(self.data))
 
     def get_last_number(self) -> int:
         try:
-            return self.data[-1]
+            return self.data[0]
         except Exception as e:
             print(str(e), str(self.data))
 
@@ -75,11 +79,21 @@ class AnalyseStream:
             print(str(e), str(self.data))
 
 
+'''
+    Class to model the output in order to show structured data to the users
+'''
+
+
 class GenerateOuput:
 
     def __init__(self, stream_of_data) -> None:
         self.data = stream_of_data
         self.analyse_data = AnalyseStream(self.data)
+
+    '''
+        Method that collects the data processed and analysed
+        structures the data into a Dict
+    '''
 
     def structure_data(self) -> dict:
         structure = {
@@ -93,7 +107,12 @@ class GenerateOuput:
         }
         return structure
 
+    '''
+        Prints the data
+    '''
+
     def print_data(self, structured_data: dict):
+        # Printing the data processed every minute
         for k, v in structured_data.items():
             print(str(k) + ": " + str(v))
         print()

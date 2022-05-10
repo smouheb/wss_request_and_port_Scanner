@@ -1,17 +1,33 @@
-from data_processing import GenerateOuput
 from connection_pool import Connection
+import pyfiglet
+
+result = pyfiglet.figlet_format("HELP TOM")
+print(result)
+print()
 
 con = Connection()
-con.connect('8080')
 
-# while True:
-#     queue = Queue()
-#     end_time = time.time() + 60
-#     counter = 0
-#     while time.time() < end_time:
-#         payload = [random.randint(0, 100) for i in range(100)]
-#         for i in payload:
-#             queue.put(i)
-#         time.sleep(0.1)
-#     output = GenerateOuput(queue)
-#     output.print_data(output.structure_data())
+while True:
+    option = input("\n Select the following option: \n\n"
+                   "(1) Check which port can be used \n"
+                   "(2) Run the process \n"
+                   "(3) Close the process \n")
+
+    if option == '1':
+
+        print('\n Checking open port \n')
+        con.run_connection_test()
+
+    elif option == '2':
+
+        print('\n Sarting the process...\n')
+        con.connect('8080')
+
+    elif option == '3':
+
+        result = pyfiglet.figlet_format("Bye Bye")
+        print(result)
+        quit()
+
+    else:
+        print('\n Wrong option \n')
