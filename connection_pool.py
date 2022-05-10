@@ -1,56 +1,54 @@
 import websockets
 import asyncio
-import nmap3
+from queue import Queue
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Connection:
 
-    def __init__(self) -> None:
+    def __init__(self, nbre_of_threads=None) -> None:
         self.port = None
+        self.NBRE_THREADS = nbre_of_threads
+        self.NBRE_PORTS = 65535
+        self.queue = Queue()
 
     '''
         Method to find the ports whether filtered or open
     '''
+    async def test_connection(self, port):
+        try:
+            print(f'trying for ws://209.126.82.14:{port}')
+            print('-----------------')
+            connection = await websockets.connect('ws://209.126.82.14:'+str(port))
+            print('Seems to work ', str(port))
+            msg = await connection.recv()
+            with open('./log.txt', 'r') as file:
+                file.write(msg)
+            print(msg)
+            print('-----------------')
 
-    def find_port(self, ip_address: str):
-        # nmap_instance = nmap3.Nmap()
-        # result = nmap_instance.scan_top_ports(ip_address, args='-Pn')
+        except Exception as e:
+            print('issuer with'+str(e))
+    '''
+        Method to run the test and keep track of the number of iteration (per nbre of ports)
+    '''
 
-        for i in range(0, 65535):
-            try:
-                self.port = str(i)
-                asyncio.run(self.test_connection(self.port))
-                print('This is the ' + str(i) + 'running')
-            except Exception as e:
-                print('This is not working for port ' +
-                      str(i), str(e))
-
-        # for k, v in result[ip_address].items():
-        #     if k == 'ports':
-        #         for n in range(len(v)):
-        #             try:
-        #                 self.port = v[n]['portid']
-        #                 asyncio.run(self.test_connection(self.port))
-        #                 print('This is the ' + str(self.port) + 'running')
-        #             except Exception as e:
-        #                 print('This is not working for port ' +
-        #                       str(self.port), str(e))
+    def run_con_test(self, port):
+        asyncio.run(self. test_connection(port))
 
     '''
-        Connection method to ws
+        Thread manager, executes the run_con_test for each port
+    '''
+
+    def start_threads(self):
+        port_nbre = [i for i in range(self.NBRE_PORTS)]
+        with ThreadPoolExecutor(self.NBRE_THREADS) as executor:
+            results = executor.map(self.run_con_test, port_nbre)
+        for result in results:
+            print(result)
+
+    '''
+        Connection method to ws 
     '''
     async def connect(self):
         pass
-
-    '''
-        Method used to test the connection wih the port retrieved by "find_port()"
-    '''
-    async def test_connection(self, port):
-        async with websockets.connect("ws://209.126.82.14:"+str(port)) as websocket:
-            try:
-                print('Seems to work', str(port))
-                msg = await websocket.recv()
-                print(msg)
-
-            except Exception as e:
-                print('Exception within the socket connection ')
